@@ -18,6 +18,18 @@ const fullTitle = title === 'Novella Nora' ? title : `${title} · Novella Nora`
     <meta name="generator" content={Astro.generator} />
     <title>{fullTitle}</title>
     {description && <meta name="description" content={description} />}
+    <script
+      is:inline
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-Z9ZQSX1X53"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || []
+      function gtag() {
+        dataLayer.push(arguments)
+      }
+      gtag('js', new Date())
+      gtag('config', 'G-Z9ZQSX1X53')
+    </script>
     <link
       rel="preconnect"
       href="https://fonts.googleapis.com"
