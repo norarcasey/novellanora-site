@@ -1,0 +1,49 @@
+---
+import Base from '@/layouts/Base.astro'
+import { getPublishedBySlug } from '@/lib/supabase'
+import { formatDate } from '@/lib/date'
+
+const { slug } = Astro.params
+if (!slug) return Astro.redirect('/', 302)
+
+const writing = await getPublishedBySlug(slug)
+if (!writing) {
+  return new Response(null, { status: 404, statusText: 'Not Found' })
+}
+
+const description = writing.body_text
+  ? writing.body_text.slice(0, 200).replace(/\s+/g, ' ').trim()
+  : undefined
+---
+
+<Base title={writing.title || 'Untitled'} description={description}>
+  <article class="max-w-2xl mx-auto">
+    <header class="mb-10">
+      <h1 class="font-serif text-3xl sm:text-4xl font-medium text-[var(--color-ink)] leading-tight mb-3">
+        {writing.title || 'Untitled'}
+      </h1>
+      <div class="flex items-center gap-3 text-xs font-sans uppercase tracking-widest text-[var(--color-muted)]">
+        <time datetime={writing.published_at}>
+          {formatDate(writing.published_at)}
+        </time>
+        {writing.location && (
+          <>
+            <span aria-hidden="true">·</span>
+            <span>{writing.location}</span>
+          </>
+        )}
+      </div>
+    </header>
+
+    <div class="prose-reader" set:html={writing.body_html} />
+
+    <div class="mt-16 pt-8 border-t border-[var(--color-rule)]">
+      <a
+        href="/"
+        class="text-sm font-sans text-[var(--color-muted)] hover:text-[var(--color-accent)] transition-colors"
+      >
+        ← All writings
+      </a>
+    </div>
+  </article>
+</Base>

@@ -1,0 +1,49 @@
+---
+import Base from '@/layouts/Base.astro'
+import { listPublished } from '@/lib/supabase'
+import { formatDate } from '@/lib/date'
+
+const writings = await listPublished()
+
+function excerpt(text: string, max = 180): string {
+  const clean = text.replace(/\s+/g, ' ').trim()
+  if (clean.length <= max) return clean
+  return clean.slice(0, max).replace(/\s\S*$/, '') + '…'
+}
+---
+
+<Base title="Novella Nora" description="Writings by Nora Casey.">
+  <div class="max-w-2xl mx-auto">
+    {writings.length === 0 ? (
+      <p class="text-[var(--color-muted)] italic">No writings published yet.</p>
+    ) : (
+      <ul class="flex flex-col gap-10">
+        {writings.map((w) => (
+          <li>
+            <article>
+              <a
+                href={`/writings/${w.slug}`}
+                class="group block"
+              >
+                <h2 class="font-serif text-2xl font-medium text-[var(--color-ink)] group-hover:text-[var(--color-accent)] transition-colors mb-1">
+                  {w.title || 'Untitled'}
+                </h2>
+                <time
+                  datetime={w.published_at}
+                  class="block text-xs font-sans uppercase tracking-widest text-[var(--color-muted)] mb-3"
+                >
+                  {formatDate(w.published_at)}
+                </time>
+                {w.body_text && (
+                  <p class="text-[var(--color-ink)]/80 font-serif leading-relaxed">
+                    {excerpt(w.body_text)}
+                  </p>
+                )}
+              </a>
+            </article>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</Base>

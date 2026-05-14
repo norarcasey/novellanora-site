@@ -1,0 +1,122 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-serif: 'Source Serif 4', 'Iowan Old Style', 'Apple Garamond', Georgia,
+    'Times New Roman', serif;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --color-paper: #fbf8f3;
+  --color-ink: #1a1a1a;
+  --color-rule: #d8d4cb;
+  --color-muted: #6b6454;
+  --color-accent: #9b6b3f;
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-serif);
+}
+
+body {
+  font-feature-settings: 'kern', 'liga', 'onum';
+}
+
+/* Reader typography for entry bodies */
+.prose-reader {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  max-width: 38rem;
+}
+
+.prose-reader p {
+  margin-bottom: 1.25em;
+}
+
+.prose-reader h1,
+.prose-reader h2,
+.prose-reader h3 {
+  font-weight: 500;
+  margin-top: 2em;
+  margin-bottom: 0.5em;
+  line-height: 1.25;
+}
+
+.prose-reader h2 {
+  font-size: 1.5rem;
+}
+
+.prose-reader h3 {
+  font-size: 1.25rem;
+}
+
+.prose-reader blockquote {
+  border-left: 2px solid var(--color-rule);
+  padding-left: 1em;
+  margin: 1.5em 0;
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+.prose-reader ul,
+.prose-reader ol {
+  margin: 1em 0;
+  padding-left: 1.5em;
+}
+
+.prose-reader ul li {
+  list-style-type: disc;
+  margin-bottom: 0.5em;
+}
+
+.prose-reader ol li {
+  list-style-type: decimal;
+  margin-bottom: 0.5em;
+}
+
+.prose-reader a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+.prose-reader a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.prose-reader hr {
+  border: 0;
+  border-top: 1px solid var(--color-rule);
+  margin: 2.5em auto;
+  width: 8rem;
+}
+
+.prose-reader img,
+.prose-reader .entry-image {
+  max-width: 100%;
+  height: auto;
+  margin: 1.5em 0;
+  border-radius: 2px;
+}
+
+.prose-reader pre {
+  background: rgba(0, 0, 0, 0.04);
+  padding: 1em;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.9em;
+  margin: 1.5em 0;
+}
+
+.prose-reader code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+}
+
+.prose-reader iframe {
+  max-width: 100%;
+  margin: 1.5em 0;
+  border: 1px solid var(--color-rule);
+  border-radius: 2px;
+}
