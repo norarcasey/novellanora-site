@@ -3,6 +3,11 @@ import Base from '@/layouts/Base.astro'
 import { listPublished } from '@/lib/supabase'
 import { formatDate } from '@/lib/date'
 
+// The writings list must always reflect Supabase. Belt-and-suspenders
+// to the ISR `exclude` config — explicit no-store keeps Vercel's edge
+// and the browser from caching this response.
+Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate')
+
 const writings = await listPublished()
 
 function excerpt(text: string, max = 180): string {

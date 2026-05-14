@@ -3,6 +3,9 @@ import Base from '@/layouts/Base.astro'
 import { getPublishedBySlug } from '@/lib/supabase'
 import { formatDate } from '@/lib/date'
 
+// Always render fresh — re-publishes must show up immediately.
+Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate')
+
 const { slug } = Astro.params
 if (!slug) return Astro.redirect('/', 302)
 
