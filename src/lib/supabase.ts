@@ -13,9 +13,16 @@ export const supabase = createClient(url, key, {
   auth: { persistSession: false },
 })
 
+// Snapshots are shared with noracasey.com (technical posts), distinguished by
+// `site`. Every query here MUST filter on it: without the filter, technical
+// posts would render on novellanora.com, and a slug reused across the two
+// sites would make `.maybeSingle()` fail on two matching rows.
+const SITE = 'novellanora'
+
 export interface PublishedEntry {
   entry_id: string
   user_id: string
+  site: string
   title: string | null
   slug: string
   body_html: string
@@ -29,6 +36,7 @@ export async function listPublished(): Promise<PublishedEntry[]> {
   const { data, error } = await supabase
     .from('published_entries')
     .select('*')
+    .eq('site', SITE)
     .order('published_at', { ascending: false })
   if (error) {
     console.error('Failed to list published entries:', error)
@@ -41,6 +49,7 @@ export async function getPublishedBySlug(slug: string): Promise<PublishedEntry |
   const { data, error } = await supabase
     .from('published_entries')
     .select('*')
+    .eq('site', SITE)
     .eq('slug', slug)
     .maybeSingle()
   if (error) {
