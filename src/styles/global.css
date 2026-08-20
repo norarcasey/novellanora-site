@@ -120,3 +120,41 @@ body {
   border: 1px solid var(--color-rule);
   border-radius: 2px;
 }
+
+/* Citations, as published by the studio: a superscript marker in the prose and
+   a numbered reference list appended at the end. The studio resolves the
+   numbering at publish time, so this is presentation only. */
+.prose-reader sup.citation {
+  font-size: 0.7em;
+  vertical-align: super;
+  line-height: 0;
+}
+
+.prose-reader sup.citation a {
+  text-decoration: none;
+}
+
+.prose-reader .references-heading {
+  margin-top: 2.5rem;
+}
+
+.prose-reader ol.references {
+  font-size: 0.9em;
+}
+
+.prose-reader ol.references li {
+  margin-bottom: 0.5rem;
+  /* Long URLs shouldn't push the page sideways on a phone. */
+  overflow-wrap: anywhere;
+}
+
+.prose-reader .reference-backlink {
+  margin-right: 0.4rem;
+  text-decoration: none;
+}
+
+/* Jumping to a reference should make it obvious which one you landed on. */
+.prose-reader ol.references li:target {
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 3px;
+}
