@@ -7,8 +7,11 @@ if (!url || !key) {
   throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY')
 }
 
-// Anonymous client. RLS on `published_entries` allows public SELECT;
-// every other table is owner-only and invisible to this client.
+// Anonymous client. It reads `public_posts`, a view over the snapshot table
+// carrying only what a page renders. The table itself is owner-only and, since
+// migration 0012, not readable by this client at all: it holds the user_id of
+// whoever wrote each piece, and a public feed should not be a list of who uses
+// the studio.
 export const supabase = createClient(url, key, {
   auth: { persistSession: false },
 })
@@ -20,8 +23,6 @@ export const supabase = createClient(url, key, {
 const SITE = 'novellanora'
 
 export interface PublishedEntry {
-  entry_id: string
-  user_id: string
   site: string
   title: string | null
   slug: string
@@ -34,7 +35,7 @@ export interface PublishedEntry {
 
 export async function listPublished(): Promise<PublishedEntry[]> {
   const { data, error } = await supabase
-    .from('published_entries')
+    .from('public_posts')
     .select('*')
     .eq('site', SITE)
     .order('published_at', { ascending: false })
@@ -47,7 +48,7 @@ export async function listPublished(): Promise<PublishedEntry[]> {
 
 export async function getPublishedBySlug(slug: string): Promise<PublishedEntry | null> {
   const { data, error } = await supabase
-    .from('published_entries')
+    .from('public_posts')
     .select('*')
     .eq('site', SITE)
     .eq('slug', slug)

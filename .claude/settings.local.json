@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dig +short MX novellanora.com)",
+      "Bash(dig +short TXT novellanora.com)",
+      "Bash(dig +short TXT _dmarc.novellanora.com)",
+      "Bash(dig +short NS novellanora.com)",
+      "WebSearch"
+    ]
+  }
+}
