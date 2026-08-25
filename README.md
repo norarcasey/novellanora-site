@@ -1,100 +1,77 @@
 # novellanora-site
 
-Public-facing Astro site for novellanora.com. Renders writings that have
-been published from [Inkwell](../journal-app) (the private studio).
+The public face of novellanora.com. Renders writing published from
+[Noratives](../noratives), the private studio.
 
-Reads from the `published_entries` table in the shared Supabase project
-via the anonymous key — RLS guarantees nothing else is visible.
+## How it works
 
-## Architecture
-
-- **Studio** (`journal-app`) is where writings are drafted and published.
-  Clicking "Publish" upserts a snapshot row into `published_entries`.
-- **This site** server-renders those snapshots, cached at the edge via
-  Vercel ISR. The studio's publish action POSTs to `/api/revalidate`
-  here, which refreshes the affected routes on demand.
+Publishing in the studio writes a snapshot row. This site reads those rows and
+renders a page. That is the entire mechanism — there is no build step tied to
+publishing, no cache to clear, and nothing the studio has to tell this site.
 
 ```
-┌─────────────┐  publish/   ┌──────────┐  fetch    ┌─────────────────┐
-│   Inkwell   │  unpublish  │ Supabase │ ←──────── │ novellanora.com │
-│   studio    │ ──────────► │          │           │  (this site)    │
-└─────────────┘             └──────────┘           └─────────────────┘
-       │                                                    ▲
-       │            POST /api/revalidate                    │
-       └────────────────────────────────────────────────────┘
-                    (refreshes affected pages)
+┌─────────────┐   publish    ┌──────────┐   read on    ┌─────────────────┐
+│  Noratives  │ ───────────► │ Supabase │ ◄─────────── │ novellanora.com │
+│   studio    │  writes a    │          │  every       │  (this site)    │
+└─────────────┘  snapshot    └──────────┘  request     └─────────────────┘
 ```
+
+A published edit is live for the next person who loads the page. The cost is a
+Supabase round trip per view, which is the trade recorded in `astro.config.mjs`:
+a personal writing site does not get the traffic to justify cache invalidation,
+and edits appearing immediately is worth the latency.
+
+This used to work differently. The pages were cached with Vercel ISR and the
+studio POSTed to an `/api/revalidate` endpoint here to purge them. The caching
+was removed; the endpoint was not, and went on purging a cache that no longer
+existed until it was removed too. If ISR is ever turned back on, the
+notification path has to come back **with** it — see `docs/webhooks.md` in the
+studio repo, which describes the signed version to build rather than the shared
+secret this once used.
+
+### What it reads
+
+`public_posts`, a view over the snapshot table carrying only what a page
+renders. The table itself is not readable by this site's anonymous key: it holds
+the `user_id` of whoever wrote each piece, and a public feed should not double as
+a list of who uses the studio.
+
+Snapshots are shared with noracasey.com and distinguished by `site`, so every
+query filters on it. Without the filter, technical posts would render here, and a
+slug used on both sites would match two rows.
 
 ## Local development
 
 ```bash
 cp .env.example .env
-# fill in SUPABASE_URL, SUPABASE_ANON_KEY from the Supabase dashboard
-# generate a long random REVALIDATE_SECRET
-# REVALIDATE_BYPASS_TOKEN can be anything for local dev (ISR doesn't run locally)
+# fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY from the Supabase dashboard
 
 npm install
 npm run dev
 # open http://localhost:4321
 ```
 
-## Deploying to Vercel
+## Environment variables
 
-1. **Push this repo to GitHub** (separate from the journal-app repo).
-2. **Vercel dashboard → Add New Project → Import** from GitHub.
-3. **Framework preset**: Astro (auto-detected).
-4. **Environment variables**: add these in Settings → Environment Variables:
-   - `SUPABASE_URL` — same as the journal-app studio
-   - `SUPABASE_ANON_KEY` — same as the journal-app studio
-   - `REVALIDATE_SECRET` — generate with `openssl rand -hex 32`. Set the
-     same value in the journal-app's `.env` as `VITE_REVALIDATE_SECRET`.
-   - `REVALIDATE_BYPASS_TOKEN` — generate with `openssl rand -hex 32`.
-     This one is internal to Vercel; the studio doesn't need it.
-   - `SITE_URL` — `https://novellanora.com`
-5. **Deploy**. The first deploy will give you a `*.vercel.app` URL.
+Set in Vercel under Settings → Environment Variables, for Production and Preview:
 
-## Pointing novellanora.com at Vercel
+| Variable                 | What it is                                       |
+| ------------------------ | ------------------------------------------------ |
+| `VITE_SUPABASE_URL`      | the shared Supabase project                      |
+| `VITE_SUPABASE_ANON_KEY` | the anonymous key; RLS is what limits it         |
+| `SITE_URL`               | `https://www.novellanora.com`, for absolute URLs |
 
-1. **Vercel project → Settings → Domains → Add**: `novellanora.com` and
-   `www.novellanora.com`.
-2. Vercel will show DNS records to add. Where you registered the domain
-   (Cloudflare / Namecheap / Google Domains / etc), add:
-   - **Apex** (`novellanora.com`): A record → `76.76.21.21`
-   - **www** (`www.novellanora.com`): CNAME → `cname.vercel-dns.com`
-3. Vercel auto-issues a Let's Encrypt cert once DNS propagates (usually
-   <5 min, can take up to an hour).
+Nothing here is a shared secret with the studio, because nothing is sent between
+them.
 
-## Wiring the studio's publish button to this site
+## Domains
 
-In the journal-app `.env`:
-
-```
-VITE_REVALIDATE_URL=https://novellanora.com/api/revalidate
-VITE_REVALIDATE_SECRET=<the same REVALIDATE_SECRET as Vercel>
-VITE_PUBLIC_SITE_URL=https://novellanora.com
-```
-
-`VITE_PUBLIC_SITE_URL` is used by the studio to show a "View live" link
-in the publish panel. The other two power the on-demand revalidation.
-
-## How revalidation works
-
-1. Studio user clicks Publish (or Re-publish / Unpublish).
-2. Studio POSTs to `https://novellanora.com/api/revalidate` with
-   `{ slug, action, secret }`.
-3. This site validates the secret, then fetches each affected route with
-   `?_vercel_revalidate=<token>` appended. That tells Vercel to bypass
-   the cached version and re-render from Supabase, then store the fresh
-   page in the cache.
-4. The next visitor to `/` or `/writings/<slug>` gets the new content.
-
-If the webhook fails (e.g. Vercel is down), the studio publish still
-succeeds — the public site will catch up within 24 hours via the ISR
-fallback expiration, or instantly on the next revalidation call.
+`www.novellanora.com` is canonical. The apex redirects to it — the opposite
+direction from noracasey.com, which redirects `www` to the apex. Both are fine;
+they just have to stay as they are, because links already exist to each.
 
 ## Routes
 
-- `/` — list of published writings, newest first
-- `/writings/[slug]` — single writing
+- `/` — published writing, newest first
+- `/writings/[slug]` — one piece
 - `/about` — bio (edit `src/pages/about.astro`)
-- `/api/revalidate` — webhook target for the studio (POST only)

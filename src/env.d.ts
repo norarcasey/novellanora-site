@@ -1,7 +1,7 @@
 /// <reference path="../.astro/types.d.ts" />
 
 interface ImportMetaEnv {
-  // Supabase — same project as the journal-app studio.
+  // Supabase — same project as the Noratives studio.
   readonly VITE_SUPABASE_URL: string
   readonly VITE_SUPABASE_ANON_KEY: string
 
@@ -9,10 +9,7 @@ interface ImportMetaEnv {
   // but present for parity with the shared .env file.
   readonly VITE_ALLOWED_EMAIL?: string
 
-  // Optional — set when wiring up on-demand revalidation from the studio.
-  // Without these, /api/revalidate returns 500. Site still renders.
-  readonly REVALIDATE_SECRET?: string
-  readonly REVALIDATE_BYPASS_TOKEN?: string
+  // Canonical origin, for absolute URLs. Falls back to the request's own.
   readonly SITE_URL?: string
 }
 
