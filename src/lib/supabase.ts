@@ -7,6 +7,20 @@ if (!url || !key) {
   throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY')
 }
 
+// Same trap as SITE_URL in astro.config.mjs: a variable marked Sensitive in the
+// Vercel project pulls down as the literal "[SENSITIVE]", and these are inlined
+// at build time, so the wrong value ships. Marking either sensitive protects
+// nothing — the anon key is compiled into what every visitor is served, and RLS
+// is what limits it — while a site that builds green and cannot reach Supabase
+// is the worst of the failure modes available.
+if (!URL.canParse(url)) {
+  throw new Error(
+    url === '[SENSITIVE]'
+      ? 'VITE_SUPABASE_URL pulled down as "[SENSITIVE]": mark it non-sensitive in the Vercel project.'
+      : `VITE_SUPABASE_URL is not a URL: ${JSON.stringify(url)}`,
+  )
+}
+
 // Anonymous client. It reads `public_posts`, a view over the snapshot table
 // carrying only what a page renders. The table itself is owner-only and, since
 // migration 0012, not readable by this client at all: it holds the user_id of
