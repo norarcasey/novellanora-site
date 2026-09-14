@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Novella Nora">
+  <!-- The site's own accent and paper (src/styles/global.css). The N is a path
+       rather than text, so it renders the same where no serif face is loaded. -->
+  <rect width="32" height="32" rx="6" fill="#9b6b3f"/>
+  <path d="M9 24V8h4l6 9.5V8h4v16h-4l-6-9.5V24z" fill="#fbf8f3"/>
+</svg>
