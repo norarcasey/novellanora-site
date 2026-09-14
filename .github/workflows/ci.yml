@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# A second push while the first is still running has nothing left to prove: the older commit
+# is already superseded. Cancel it rather than paying for both.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    # Measured at 12s locally on 14 September (M-series, warm install). Ten minutes is far
+    # more than that on purpose — a cold runner and a cold npm cache are the common case, and
+    # a timeout tight enough to fire on a slow day skips the deploy and looks like a pass.
+    # Revisit from a real CI number once there is one; a laptop does not predict a runner.
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+
+      # Everything this project can check today. There is no lint config and there are no
+      # tests, so the gate is typecheck and build — which is a real gate, not a placeholder.
+      # Adding either is a runway item, not a reason to delay having CI at all.
+      - run: npm run typecheck
+      - run: npm run build
+
+  # The deploy exists and is switched OFF until two things only a human can do are done.
+  #
+  # Vercel's own Git integration currently ships this site on every push, with no knowledge
+  # of whether the gate passed. Turning this job on WITHOUT disconnecting that integration
+  # would reproduce CruciNora's OPS-1 exactly: there, the bot put a commit in front of users
+  # 33 seconds before the gated deploy ran, on every push in the repo's history, so a failing
+  # test would have skipped the Actions deploy while the broken commit was already live.
+  #
+  # To switch it on:
+  #   1. Disconnect the Git integration in the Vercel project settings.
+  #   2. Add VERCEL_TOKEN, VERCEL_ORG_ID and VERCEL_PROJECT_ID as repository secrets.
+  #   3. Set the repository variable ENABLE_VERCEL_DEPLOY=true.
+  # Then verify on the next push rather than assuming:
+  #   gh api repos/norarcasey/novellanora-site/deployments
+  # should show exactly one production deployment, by the workflow, with no vercel[bot] row.
+  #
+  # Until then the job is skipped and CI stays green, so a red run always means something is
+  # actually broken.
+  deploy:
+    needs: [gate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: >-
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      vars.ENABLE_VERCEL_DEPLOY == 'true'
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Build
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
