@@ -55,14 +55,39 @@ npm run dev
 
 Set in Vercel under Settings → Environment Variables, for Production and Preview:
 
-| Variable                 | What it is                                       |
-| ------------------------ | ------------------------------------------------ |
-| `VITE_SUPABASE_URL`      | the shared Supabase project                      |
-| `VITE_SUPABASE_ANON_KEY` | the anonymous key; RLS is what limits it         |
-| `SITE_URL`               | `https://www.novellanora.com`, for absolute URLs |
+| Variable                 | What it is                               |
+| ------------------------ | ---------------------------------------- |
+| `VITE_SUPABASE_URL`      | the shared Supabase project              |
+| `VITE_SUPABASE_ANON_KEY` | the anonymous key; RLS is what limits it |
+
+Both must stay **non-sensitive**. A variable marked Sensitive in Vercel cannot be
+read back, so `vercel pull` returns the literal string `[SENSITIVE]` and the
+deploy builds with that as the value. Marking them sensitive would also protect
+nothing: the anon key is compiled into the bundle and served to every visitor,
+which is what the `VITE_` prefix means. This team's Vercel settings default new
+variables to Sensitive, so add them with `vercel env add … --no-sensitive`.
+
+There is no `SITE_URL`. The canonical origin is `https://www.novellanora.com` in
+`astro.config.mjs`; setting the variable overrides it, and it was removed because
+one more place for the origin to be wrong bought nothing.
 
 Nothing here is a shared secret with the studio, because nothing is sent between
 them.
+
+## How it deploys
+
+`main` deploys through GitHub Actions and nowhere else. The `gate` job runs the
+same `npm run gate` a laptop runs — typecheck, unit tests, build — and the deploy
+job `needs` it, so a red gate means nothing ships.
+
+Vercel's own Git integration is switched off for `main` in `vercel.json`, because
+until 14 Sep 2026 it was the thing that actually shipped: on the commit that
+added CI, `vercel[bot]` had the site live 17 seconds before the gate went green.
+Branch previews still deploy from Git; only `main` is reserved for the gate.
+
+If you ever need to deploy by hand, the Actions path is the one to repeat:
+`vercel pull --environment=production`, `vercel build --prod`, then
+`vercel deploy --prebuilt --prod`.
 
 ## Domains
 
