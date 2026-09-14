@@ -2,6 +2,7 @@
 import Base from '@/layouts/Base.astro'
 import { getPublishedBySlug } from '@/lib/supabase'
 import { formatDate } from '@/lib/date'
+import { excerpt } from '@/lib/text'
 
 // Always render fresh — re-publishes must show up immediately.
 Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate')
@@ -14,12 +15,17 @@ if (!writing) {
   return new Response(null, { status: 404, statusText: 'Not Found' })
 }
 
-const description = writing.body_text
-  ? writing.body_text.slice(0, 200).replace(/\s+/g, ' ').trim()
-  : undefined
+// The same summary the index and the feed use. A social card that ends
+// mid-word reads as broken, and this one did: it cut a piece at "walking her
+// cat ar".
+const description = writing.body_text ? excerpt(writing.body_text, 200) : undefined
 ---
 
-<Base title={writing.title || 'Untitled'} description={description}>
+<Base
+  title={writing.title || 'Untitled'}
+  description={description}
+  article={{ published: writing.published_at, updated: writing.updated_at }}
+>
   <article class="max-w-2xl mx-auto">
     <header class="mb-10">
       <h1 class="font-serif text-3xl sm:text-4xl font-medium text-[var(--color-ink)] leading-tight mb-3">

@@ -1,13 +1,56 @@
 ---
 import '@/styles/global.css'
+import { SITE_ORIGIN } from '@/lib/site'
 
 interface Props {
   title: string
   description?: string
+  /** Present when the page is one published piece, which changes what the
+   *  social card and the structured data claim this page IS. */
+  article?: {
+    published: string
+    updated?: string
+  }
 }
 
-const { title, description } = Astro.props
+const { title, description, article } = Astro.props
 const fullTitle = title === 'Novella Nora' ? title : `${title} · Novella Nora`
+
+// www is canonical; the apex redirects to it. `Astro.site` carries the
+// configured origin, and the fallback only matters in dev.
+const origin = Astro.site ?? new URL(SITE_ORIGIN)
+const canonical = new URL(Astro.url.pathname, origin).href
+
+// Structured data says what a page IS, where the meta tags say how it should be
+// displayed. Kept to what the page actually backs up: one author, these pieces,
+// the dates the studio recorded. Nothing here claims a rating or a count the
+// site cannot show.
+const person = {
+  '@type': 'Person',
+  '@id': `${new URL('/', origin).href}#nora`,
+  name: 'Nora Casey',
+  url: new URL('/', origin).href,
+}
+const structuredData = article
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: title,
+      ...(description === undefined ? {} : { description }),
+      datePublished: article.published,
+      ...(article.updated === undefined ? {} : { dateModified: article.updated }),
+      author: person,
+      mainEntityOfPage: canonical,
+      url: canonical,
+    }
+  : {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'Novella Nora',
+      ...(description === undefined ? {} : { description }),
+      url: new URL('/', origin).href,
+      author: person,
+    }
 ---
 
 <!doctype html>
@@ -18,6 +61,36 @@ const fullTitle = title === 'Novella Nora' ? title : `${title} · Novella Nora`
     <meta name="generator" content={Astro.generator} />
     <title>{fullTitle}</title>
     {description && <meta name="description" content={description} />}
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="Novella Nora"
+      href="/rss.xml"
+    />
+
+    <!-- The card describes the page, not the site: a piece unfurls as itself.
+         No og:image yet, so the card type is `summary` rather than
+         `summary_large_image` — claiming the large card without an image gets
+         a blank panel rather than a bigger one. -->
+    <meta property="og:type" content={article ? 'article' : 'website'} />
+    <meta property="og:site_name" content="Novella Nora" />
+    <meta property="og:title" content={title} />
+    <meta property="og:url" content={canonical} />
+    {description && <meta property="og:description" content={description} />}
+    {article && <meta property="article:published_time" content={article.published} />}
+    {article?.updated && <meta property="article:modified_time" content={article.updated} />}
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    {description && <meta name="twitter:description" content={description} />}
+
+    <script
+      type="application/ld+json"
+      is:inline
+      set:html={JSON.stringify(structuredData)}
+    />
+
     <script
       is:inline
       async

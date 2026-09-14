@@ -10,7 +10,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   output: 'server',
-  site: process.env.SITE_URL || 'https://novellanora.com',
+  site: process.env.SITE_URL || 'https://www.novellanora.com',
   adapter: vercel(),
   vite: {
     plugins: [tailwindcss()],
