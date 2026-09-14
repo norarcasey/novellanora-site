@@ -95,6 +95,32 @@ If you ever need to deploy by hand, the Actions path is the one to repeat:
 direction from noracasey.com, which redirects `www` to the apex. Both are fine;
 they just have to stay as they are, because links already exist to each.
 
+## Images
+
+Nothing in `public/` is hand-drawn. Every raster file there is generated from an
+SVG and committed:
+
+| Output                       | Source                       |
+| ---------------------------- | ---------------------------- |
+| `public/og.png`              | `assets/og-card.svg`         |
+| `public/apple-touch-icon.png`| `assets/apple-touch-icon.svg`|
+| `public/favicon.ico`         | `public/favicon.svg`         |
+
+```bash
+npm run images   # rewrites all three, then commit what moved
+```
+
+The rasteriser is a devDependency and ships nowhere; the images are committed
+rather than built, because they change about once a year and the alternative is
+carrying a rasteriser into the deployed function. The catch is that nothing
+notices if an SVG is edited and this is not re-run, so **re-run it in the same
+commit**. `src/lib/og.test.ts` checks what bytes can prove — that the files
+exist, and that they are the format and the size the pages advertise.
+
+The card is one image for the whole site, not one per piece. A piece still
+unfurls as itself: `og:title` and `og:description` carry its title and its
+opening. See `src/lib/og.ts` for why per-piece cards were not built.
+
 ## Routes
 
 - `/` — published writing, newest first

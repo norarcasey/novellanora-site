@@ -10,7 +10,8 @@
     "gate": "npm run typecheck && npm run test && npm run build",
     "preview": "astro preview",
     "typecheck": "astro check",
-    "test": "vitest run"
+    "test": "vitest run",
+    "images": "node scripts/images.ts"
   },
   "dependencies": {
     "@astrojs/vercel": "^8.0.0",
@@ -21,6 +22,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^26.5.1",
     "typescript": "^5.4.5",
     "vitest": "^5.0.0"

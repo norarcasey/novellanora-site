@@ -1,6 +1,7 @@
 ---
 import '@/styles/global.css'
 import { SITE_ORIGIN } from '@/lib/site'
+import { APPLE_TOUCH_ICON, OG_IMAGE } from '@/lib/og'
 
 interface Props {
   title: string
@@ -20,6 +21,11 @@ const fullTitle = title === 'Novella Nora' ? title : `${title} · Novella Nora`
 // configured origin, and the fallback only matters in dev.
 const origin = Astro.site ?? new URL(SITE_ORIGIN)
 const canonical = new URL(Astro.url.pathname, origin).href
+
+// The card is one image for the whole site; `og:title` is what makes a piece
+// unfurl as itself. Absolute, because an unfurler is not on this origin and
+// will not resolve a relative path.
+const cardImage = new URL(OG_IMAGE.path, origin).href
 
 // Structured data says what a page IS, where the meta tags say how it should be
 // displayed. Kept to what the page actually backs up: one author, these pieces,
@@ -62,7 +68,13 @@ const structuredData = article
     <title>{fullTitle}</title>
     {description && <meta name="description" content={description} />}
     <link rel="canonical" href={canonical} />
+    <!-- The .ico first, so a browser that understands neither of the others
+         still finds one; the SVG wins wherever it is understood, which is
+         everywhere current. The touch icon is full-bleed on purpose — iOS
+         rounds it itself. -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href={APPLE_TOUCH_ICON.path} />
     <link
       rel="alternate"
       type="application/rss+xml"
@@ -70,10 +82,8 @@ const structuredData = article
       href="/rss.xml"
     />
 
-    <!-- The card describes the page, not the site: a piece unfurls as itself.
-         No og:image yet, so the card type is `summary` rather than
-         `summary_large_image` — claiming the large card without an image gets
-         a blank panel rather than a bigger one. -->
+    <!-- The card describes the page, not the site: a piece unfurls as itself,
+         under one shared image. -->
     <meta property="og:type" content={article ? 'article' : 'website'} />
     <meta property="og:site_name" content="Novella Nora" />
     <meta property="og:title" content={title} />
@@ -81,9 +91,15 @@ const structuredData = article
     {description && <meta property="og:description" content={description} />}
     {article && <meta property="article:published_time" content={article.published} />}
     {article?.updated && <meta property="article:modified_time" content={article.updated} />}
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content={cardImage} />
+    <meta property="og:image:width" content={String(OG_IMAGE.width)} />
+    <meta property="og:image:height" content={String(OG_IMAGE.height)} />
+    <meta property="og:image:alt" content={OG_IMAGE.alt} />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     {description && <meta name="twitter:description" content={description} />}
+    <meta name="twitter:image" content={cardImage} />
+    <meta name="twitter:image:alt" content={OG_IMAGE.alt} />
 
     <script
       type="application/ld+json"

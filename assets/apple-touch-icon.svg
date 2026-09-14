@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 32 32" role="img" aria-label="Novella Nora">
+  <!-- public/favicon.svg without the rounded corners, and that is the whole
+       difference. iOS masks a home-screen icon itself and composites what is
+       left onto black, so the rounded rect's transparent corners would come
+       back as four black wedges outside a second, smaller radius. Full bleed. -->
+  <rect width="32" height="32" fill="#9b6b3f"/>
+  <path d="M9 24V8h4l6 9.5V8h4v16h-4l-6-9.5V24z" fill="#fbf8f3"/>
+</svg>
