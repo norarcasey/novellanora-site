@@ -24,11 +24,10 @@ jobs:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
 
-      # Everything this project can check today. There is no lint config and there are no
-      # tests, so the gate is typecheck and build — which is a real gate, not a placeholder.
-      # Adding either is a runway item, not a reason to delay having CI at all.
-      - run: npm run typecheck
-      - run: npm run build
+      # One command, the same one `npm run gate` runs locally, so CI and a laptop cannot
+      # disagree about what passing means. It is typecheck, then the unit tests, then the
+      # build — cheap checks first. There is still no lint config; that is OPS-09.
+      - run: npm run gate
 
   # The deploy exists and is switched OFF until two things only a human can do are done.
   #
