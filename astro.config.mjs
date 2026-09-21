@@ -3,10 +3,13 @@ import vercel from '@astrojs/vercel'
 import tailwindcss from '@tailwindcss/vite'
 
 // novellanora.com — the public face for Nora's published writings.
-// Renders server-side from the Supabase `published_entries` table on
-// every request. No edge caching: a personal writing site doesn't get
-// enough traffic to justify the cache-invalidation complexity, and the
-// "publish edits show up immediately" UX is worth the ~100ms per page.
+// Renders server-side on every request from `public_posts`, a view over the
+// studio's snapshot table — src/lib/supabase.ts says why the view and not the
+// table. No edge caching: a personal writing site doesn't get enough traffic
+// to justify the cache-invalidation complexity, and "publish edits show up
+// immediately" is worth the latency. How MUCH latency is not known: the
+// figure that stood here was never measured against production, so it is
+// absent rather than approximated. Measuring it is OPS-04.
 
 // `vercel pull` cannot read back an environment variable marked Sensitive in
 // the Vercel project: it returns the literal string "[SENSITIVE]" instead. Astro

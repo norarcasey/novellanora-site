@@ -6,9 +6,11 @@ import { markUnavailable } from '@/lib/unavailable'
 import { formatDate } from '@/lib/date'
 import { excerpt } from '@/lib/text'
 
-// The writings list must always reflect Supabase. Belt-and-suspenders
-// to the ISR `exclude` config — explicit no-store keeps Vercel's edge
-// and the browser from caching this response.
+// The writings list must always reflect Supabase, and this line is now the only
+// thing in the repo that forbids a cache from keeping it. It was once
+// belt-and-suspenders to an ISR `exclude` config; that config went in May and
+// the endpoint behind it in August (the README tells the story), so removing it
+// would leave nothing behind it rather than one layer of two.
 Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate')
 
 // "No writings published yet" is a true sentence about an empty shelf and a lie
