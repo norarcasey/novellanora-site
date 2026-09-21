@@ -12,9 +12,19 @@ import { APPLE_TOUCH_ICON, OG_IMAGE } from '@/lib/og'
 // intake URLs from `PUBLIC_VERCEL_OBSERVABILITY_BASEPATH`, the per-project seed
 // Vercel injects at build time, and falls back to `/_vercel/insights/` only
 // when that is absent — and the fallback is the path carried by every tracker
-// blocklist, so a hardcoded tag undercounts precisely the readers this is here
-// to count. It also passes `Astro.params`, so a piece is reported both as
-// itself and under `/writings/[slug]`.
+// blocklist, so a hardcoded tag can only ever get the blocked one. It also
+// passes `Astro.params`, so a piece is reported both as itself and under
+// `/writings/[slug]` — verified in the served HTML.
+//
+// BE HONEST ABOUT WHICH HALF OF THAT IS LIVE: as deployed, the seed is ABSENT
+// and this site is on `/_vercel/insights/` too. Checked 22 Sep, after Web
+// Analytics was enabled — `vercel pull --environment=production` returns no
+// `PUBLIC_VERCEL_OBSERVABILITY_*` variable, and the deployed chunk resolves to
+// the fallback. The likely reason is that Vercel passes the seed through
+// dynamic configuration to builds on ITS builders, and OPS-08 moved this
+// build into GitHub Actions. So the component's advantage here is that the
+// unblocked path is REACHABLE without rewriting anything, not that it is in
+// use; the route grouping is the part paying off today.
 //
 // This comment is in the frontmatter and not beside the element on purpose: an
 // HTML comment is served, and this one measured ~900 bytes — on a page sent
