@@ -47,7 +47,17 @@ export interface PublishedEntry {
   updated_at: string
 }
 
-export async function listPublished(): Promise<PublishedEntry[]> {
+/** Either the store answered, or it could not be asked.
+ *
+ *  Collapsing those two into `[]` is what made an outage read as "Nora has
+ *  published nothing" (PUB-04): `ok: true` with no rows is a real answer that
+ *  happens to be empty, `ok: false` is no answer at all, and the routes owe a
+ *  reader different things for each. The error itself stays here, in the log,
+ *  rather than travelling to a call site that would only have to decide not to
+ *  show it. */
+export type Query<T> = { ok: true; data: T } | { ok: false }
+
+export async function listPublished(): Promise<Query<PublishedEntry[]>> {
   const { data, error } = await supabase
     .from('public_posts')
     .select('*')
@@ -55,12 +65,12 @@ export async function listPublished(): Promise<PublishedEntry[]> {
     .order('published_at', { ascending: false })
   if (error) {
     console.error('Failed to list published entries:', error)
-    return []
+    return { ok: false }
   }
-  return (data ?? []) as PublishedEntry[]
+  return { ok: true, data: (data ?? []) as PublishedEntry[] }
 }
 
-export async function getPublishedBySlug(slug: string): Promise<PublishedEntry | null> {
+export async function getPublishedBySlug(slug: string): Promise<Query<PublishedEntry | null>> {
   const { data, error } = await supabase
     .from('public_posts')
     .select('*')
@@ -69,7 +79,7 @@ export async function getPublishedBySlug(slug: string): Promise<PublishedEntry |
     .maybeSingle()
   if (error) {
     console.error('Failed to load published entry:', error)
-    return null
+    return { ok: false }
   }
-  return (data as PublishedEntry | null) ?? null
+  return { ok: true, data: (data as PublishedEntry | null) ?? null }
 }

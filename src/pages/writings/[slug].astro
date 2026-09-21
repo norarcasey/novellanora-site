@@ -1,6 +1,8 @@
 ---
 import Base from '@/layouts/Base.astro'
+import Unavailable from '@/components/Unavailable.astro'
 import { getPublishedBySlug } from '@/lib/supabase'
+import { markUnavailable } from '@/lib/unavailable'
 import { formatDate } from '@/lib/date'
 import { excerpt } from '@/lib/text'
 
@@ -10,49 +12,58 @@ Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate')
 const { slug } = Astro.params
 if (!slug) return Astro.redirect('/', 302)
 
-const writing = await getPublishedBySlug(slug)
-if (!writing) {
+// 404 is a statement that this piece does not exist, and it is the sharper half
+// of PUB-04: made on a failed lookup it says a live piece was deleted, to a
+// reader and to every crawler holding the URL. So only an answer earns it.
+const result = await getPublishedBySlug(slug)
+if (result.ok && !result.data) {
   return new Response(null, { status: 404, statusText: 'Not Found' })
 }
+if (!result.ok) markUnavailable(Astro.response)
+const writing = result.ok ? result.data : null
 
 // The same summary the index and the feed use. A social card that ends
 // mid-word reads as broken, and this one did: it cut a piece at "walking her
 // cat ar".
-const description = writing.body_text ? excerpt(writing.body_text, 200) : undefined
+const description = writing?.body_text ? excerpt(writing.body_text, 200) : undefined
 ---
 
-<Base
-  title={writing.title || 'Untitled'}
-  description={description}
-  article={{ published: writing.published_at, updated: writing.updated_at }}
->
-  <article class="max-w-2xl mx-auto">
-    <header class="mb-10">
-      <h1 class="font-serif text-3xl sm:text-4xl font-medium text-[var(--color-ink)] leading-tight mb-3">
-        {writing.title || 'Untitled'}
-      </h1>
-      <div class="flex items-center gap-3 text-xs font-sans uppercase tracking-widest text-[var(--color-muted)]">
-        <time datetime={writing.published_at}>
-          {formatDate(writing.published_at)}
-        </time>
-        {writing.location && (
-          <>
-            <span aria-hidden="true">·</span>
-            <span>{writing.location}</span>
-          </>
-        )}
+{writing ? (
+  <Base
+    title={writing.title || 'Untitled'}
+    description={description}
+    article={{ published: writing.published_at, updated: writing.updated_at }}
+  >
+    <article class="max-w-2xl mx-auto">
+      <header class="mb-10">
+        <h1 class="font-serif text-3xl sm:text-4xl font-medium text-[var(--color-ink)] leading-tight mb-3">
+          {writing.title || 'Untitled'}
+        </h1>
+        <div class="flex items-center gap-3 text-xs font-sans uppercase tracking-widest text-[var(--color-muted)]">
+          <time datetime={writing.published_at}>
+            {formatDate(writing.published_at)}
+          </time>
+          {writing.location && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>{writing.location}</span>
+            </>
+          )}
+        </div>
+      </header>
+
+      <div class="prose-reader" set:html={writing.body_html} />
+
+      <div class="mt-16 pt-8 border-t border-[var(--color-rule)]">
+        <a
+          href="/"
+          class="text-sm font-sans text-[var(--color-muted)] hover:text-[var(--color-accent)] transition-colors"
+        >
+          ← All writings
+        </a>
       </div>
-    </header>
-
-    <div class="prose-reader" set:html={writing.body_html} />
-
-    <div class="mt-16 pt-8 border-t border-[var(--color-rule)]">
-      <a
-        href="/"
-        class="text-sm font-sans text-[var(--color-muted)] hover:text-[var(--color-accent)] transition-colors"
-      >
-        ← All writings
-      </a>
-    </div>
-  </article>
-</Base>
+    </article>
+  </Base>
+) : (
+  <Unavailable />
+)}

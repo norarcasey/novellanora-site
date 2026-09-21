@@ -1,6 +1,8 @@
 ---
 import Base from '@/layouts/Base.astro'
+import Unavailable from '@/components/Unavailable.astro'
 import { listPublished } from '@/lib/supabase'
+import { markUnavailable } from '@/lib/unavailable'
 import { formatDate } from '@/lib/date'
 import { excerpt } from '@/lib/text'
 
@@ -9,41 +11,51 @@ import { excerpt } from '@/lib/text'
 // and the browser from caching this response.
 Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate')
 
-const writings = await listPublished()
+// "No writings published yet" is a true sentence about an empty shelf and a lie
+// about an unreachable one, and this page cannot tell them apart by itself —
+// which is why the query says which it was. Only a real, empty answer keeps the
+// line below.
+const result = await listPublished()
+if (!result.ok) markUnavailable(Astro.response)
+const writings = result.ok ? result.data : []
 ---
 
-<Base title="Novella Nora" description="Writings by Nora Casey.">
-  <div class="max-w-2xl mx-auto">
-    {writings.length === 0 ? (
-      <p class="text-[var(--color-muted)] italic">No writings published yet.</p>
-    ) : (
-      <ul class="flex flex-col gap-10">
-        {writings.map((w) => (
-          <li>
-            <article>
-              <a
-                href={`/writings/${w.slug}`}
-                class="group block"
-              >
-                <h2 class="font-serif text-2xl font-medium text-[var(--color-ink)] group-hover:text-[var(--color-accent)] transition-colors mb-1">
-                  {w.title || 'Untitled'}
-                </h2>
-                <time
-                  datetime={w.published_at}
-                  class="block text-xs font-sans uppercase tracking-widest text-[var(--color-muted)] mb-3"
+{result.ok ? (
+  <Base title="Novella Nora" description="Writings by Nora Casey.">
+    <div class="max-w-2xl mx-auto">
+      {writings.length === 0 ? (
+        <p class="text-[var(--color-muted)] italic">No writings published yet.</p>
+      ) : (
+        <ul class="flex flex-col gap-10">
+          {writings.map((w) => (
+            <li>
+              <article>
+                <a
+                  href={`/writings/${w.slug}`}
+                  class="group block"
                 >
-                  {formatDate(w.published_at)}
-                </time>
-                {w.body_text && (
-                  <p class="text-[var(--color-ink)]/80 font-serif leading-relaxed">
-                    {excerpt(w.body_text)}
-                  </p>
-                )}
-              </a>
-            </article>
-          </li>
-        ))}
-      </ul>
-    )}
-  </div>
-</Base>
+                  <h2 class="font-serif text-2xl font-medium text-[var(--color-ink)] group-hover:text-[var(--color-accent)] transition-colors mb-1">
+                    {w.title || 'Untitled'}
+                  </h2>
+                  <time
+                    datetime={w.published_at}
+                    class="block text-xs font-sans uppercase tracking-widest text-[var(--color-muted)] mb-3"
+                  >
+                    {formatDate(w.published_at)}
+                  </time>
+                  {w.body_text && (
+                    <p class="text-[var(--color-ink)]/80 font-serif leading-relaxed">
+                      {excerpt(w.body_text)}
+                    </p>
+                  )}
+                </a>
+              </article>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </Base>
+) : (
+  <Unavailable />
+)}

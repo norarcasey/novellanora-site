@@ -1,0 +1,22 @@
+---
+// The outage, as a page rather than as an absence: the site's own header, so a
+// reader can try again or reach the other pages, and a sentence that says what
+// happened. Rendered by both HTML routes; it carries its own <Base>, so a page
+// uses it INSTEAD of its own layout rather than inside it.
+//
+// The status is set by the route, in the frontmatter, where a response can
+// still be changed — see markUnavailable in src/lib/unavailable.ts.
+import Base from '@/layouts/Base.astro'
+import { UNAVAILABLE_MESSAGE, UNAVAILABLE_TITLE } from '@/lib/unavailable'
+---
+
+<Base title={UNAVAILABLE_TITLE}>
+  <div class="max-w-2xl mx-auto">
+    <h1 class="font-serif text-2xl font-medium text-[var(--color-ink)] mb-3">
+      {UNAVAILABLE_TITLE}
+    </h1>
+    <p class="text-[var(--color-ink)]/80 font-serif leading-relaxed">
+      {UNAVAILABLE_MESSAGE}
+    </p>
+  </div>
+</Base>
