@@ -36,6 +36,14 @@ export const supabase = createClient(url, key, {
 // sites would make `.maybeSingle()` fail on two matching rows.
 const SITE = 'novellanora'
 
+/** The shape of a `public_posts` row, as this site reads it.
+ *
+ *  Nothing verifies it at runtime: the client is untyped, so PostgREST hands
+ *  back `any` and every field below is this file's word against the view's. It
+ *  is written as an annotation on the result rather than an `as` cast on purpose
+ *  — the assumption is identical, but an annotation is a declaration TypeScript
+ *  checks later assignments against, where a cast is an instruction to stop
+ *  checking. If the view ever grows a second reader, generate the types. */
 export interface PublishedEntry {
   site: string
   title: string | null
@@ -67,7 +75,8 @@ export async function listPublished(): Promise<Query<PublishedEntry[]>> {
     console.error('Failed to list published entries:', error)
     return { ok: false }
   }
-  return { ok: true, data: (data ?? []) as PublishedEntry[] }
+  const rows: PublishedEntry[] = data ?? []
+  return { ok: true, data: rows }
 }
 
 export async function getPublishedBySlug(slug: string): Promise<Query<PublishedEntry | null>> {
@@ -81,5 +90,6 @@ export async function getPublishedBySlug(slug: string): Promise<Query<PublishedE
     console.error('Failed to load published entry:', error)
     return { ok: false }
   }
-  return { ok: true, data: (data as PublishedEntry | null) ?? null }
+  const row: PublishedEntry | null = data ?? null
+  return { ok: true, data: row }
 }

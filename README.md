@@ -51,6 +51,38 @@ npm run dev
 # open http://localhost:4321
 ```
 
+## Formatting and lint
+
+```bash
+npm run format        # Prettier, in place
+npm run format:check  # what the gate runs
+npm run lint          # ESLint
+```
+
+Prettier owns formatting and ESLint owns everything else: `eslint-config-prettier`
+is last in `eslint.config.js` and switches off every stylistic rule, so the two
+cannot disagree about a file. Settings match the other repos here — no semicolons,
+single quotes, trailing commas, 100 columns.
+
+The ruleset is deliberately smaller than the app repos': the recommended sets plus
+the two house rules about assertions (`x as Foo` and `x!` are both errors — use an
+annotation or a real runtime check). `eslint-plugin-astro` is what makes the
+templates lintable at all; without it the frontmatter blocks, where most of this
+site's logic lives, would be unchecked.
+
+Two exceptions are written down rather than silent: `.d.ts` files may use
+triple-slash references, because an `import` would make `src/env.d.ts` a module and
+its `ImportMetaEnv` would stop augmenting anything; and the gtag snippet in
+`Base.astro` keeps `arguments`, because gtag reads the Arguments object it is
+handed and rest parameters would push an Array it ignores.
+
+One thing to know about the Astro formatter: it moves whitespace across element
+boundaries, so `<a>Writings</a>` becomes an `<a>` with the text on its own line.
+`htmlWhitespaceSensitivity` has no effect — `prettier-plugin-astro` ignores it. On
+14 Sep 2026 this changed nothing a reader sees, checked by rendering every page
+against production and by screenshotting the header, but it is the thing to look at
+first if a run of Prettier ever seems to have moved something on the page.
+
 ## Environment variables
 
 Set in Vercel under Settings → Environment Variables, for Production and Preview:
@@ -77,8 +109,9 @@ them.
 ## How it deploys
 
 `main` deploys through GitHub Actions and nowhere else. The `gate` job runs the
-same `npm run gate` a laptop runs — typecheck, unit tests, build — and the deploy
-job `needs` it, so a red gate means nothing ships.
+same `npm run gate` a laptop runs — formatting, lint, typecheck, unit tests,
+build, in that order — and the deploy job `needs` it, so a red gate means nothing
+ships.
 
 Vercel's own Git integration is switched off for `main` in `vercel.json`, because
 until 14 Sep 2026 it was the thing that actually shipped: on the commit that
@@ -100,11 +133,11 @@ they just have to stay as they are, because links already exist to each.
 Nothing in `public/` is hand-drawn. Every raster file there is generated from an
 SVG and committed:
 
-| Output                       | Source                       |
-| ---------------------------- | ---------------------------- |
-| `public/og.png`              | `assets/og-card.svg`         |
-| `public/apple-touch-icon.png`| `assets/apple-touch-icon.svg`|
-| `public/favicon.ico`         | `public/favicon.svg`         |
+| Output                        | Source                        |
+| ----------------------------- | ----------------------------- |
+| `public/og.png`               | `assets/og-card.svg`          |
+| `public/apple-touch-icon.png` | `assets/apple-touch-icon.svg` |
+| `public/favicon.ico`          | `public/favicon.svg`          |
 
 ```bash
 npm run images   # rewrites all three, then commit what moved

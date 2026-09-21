@@ -40,9 +40,7 @@ const description = writing?.body_text ? excerpt(writing.body_text, 200) : undef
           {writing.title || 'Untitled'}
         </h1>
         <div class="flex items-center gap-3 text-xs font-sans uppercase tracking-widest text-[var(--color-muted)]">
-          <time datetime={writing.published_at}>
-            {formatDate(writing.published_at)}
-          </time>
+          <time datetime={writing.published_at}>{formatDate(writing.published_at)}</time>
           {writing.location && (
             <>
               <span aria-hidden="true">·</span>

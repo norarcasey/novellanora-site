@@ -30,10 +30,7 @@ const writings = result.ok ? result.data : []
           {writings.map((w) => (
             <li>
               <article>
-                <a
-                  href={`/writings/${w.slug}`}
-                  class="group block"
-                >
+                <a href={`/writings/${w.slug}`} class="group block">
                   <h2 class="font-serif text-2xl font-medium text-[var(--color-ink)] group-hover:text-[var(--color-accent)] transition-colors mb-1">
                     {w.title || 'Untitled'}
                   </h2>

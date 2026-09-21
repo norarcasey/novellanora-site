@@ -7,11 +7,14 @@
     "astro": "astro",
     "build": "astro build",
     "dev": "astro dev",
-    "gate": "npm run typecheck && npm run test && npm run build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "gate": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build",
+    "images": "node scripts/images.ts",
+    "lint": "eslint .",
     "preview": "astro preview",
-    "typecheck": "astro check",
     "test": "vitest run",
-    "images": "node scripts/images.ts"
+    "typecheck": "astro check"
   },
   "dependencies": {
     "@astrojs/vercel": "^8.0.0",
@@ -22,9 +25,17 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@eslint/js": "^10.0.1",
     "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^26.5.1",
+    "eslint": "^10.11.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-astro": "^3.2.1",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.8",
+    "prettier-plugin-astro": "^1.0.1",
     "typescript": "^5.4.5",
+    "typescript-eslint": "^8.70.1",
     "vitest": "^5.0.0"
   }
 }

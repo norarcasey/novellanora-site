@@ -5,7 +5,10 @@ describe('buildSitemap', () => {
   it('lists every URL it is given', () => {
     const xml = buildSitemap([
       { loc: 'https://www.novellanora.com/' },
-      { loc: 'https://www.novellanora.com/writings/nun-of-it', lastmod: '2026-08-19T16:44:41.000Z' },
+      {
+        loc: 'https://www.novellanora.com/writings/nun-of-it',
+        lastmod: '2026-08-19T16:44:41.000Z',
+      },
     ])
     expect(xml).toContain('<loc>https://www.novellanora.com/</loc>')
     expect(xml).toContain('<loc>https://www.novellanora.com/writings/nun-of-it</loc>')

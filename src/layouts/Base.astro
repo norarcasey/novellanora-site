@@ -75,12 +75,7 @@ const structuredData = article
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href={APPLE_TOUCH_ICON.path} />
-    <link
-      rel="alternate"
-      type="application/rss+xml"
-      title="Novella Nora"
-      href="/rss.xml"
-    />
+    <link rel="alternate" type="application/rss+xml" title="Novella Nora" href="/rss.xml" />
 
     <!-- The card describes the page, not the site: a piece unfurls as itself,
          under one shared image. -->
@@ -101,33 +96,22 @@ const structuredData = article
     <meta name="twitter:image" content={cardImage} />
     <meta name="twitter:image:alt" content={OG_IMAGE.alt} />
 
-    <script
-      type="application/ld+json"
-      is:inline
-      set:html={JSON.stringify(structuredData)}
-    />
-
-    <script
-      is:inline
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-Z9ZQSX1X53"></script>
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(structuredData)}></script>
+    <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-Z9ZQSX1X53"></script>
     <script is:inline>
       window.dataLayer = window.dataLayer || []
+      // Google's own snippet, kept verbatim. `arguments` is load-bearing: gtag
+      // reads the Arguments object it is handed, so rest parameters push an
+      // Array instead and the calls below are silently ignored.
       function gtag() {
+        // eslint-disable-next-line prefer-rest-params
         dataLayer.push(arguments)
       }
       gtag('js', new Date())
       gtag('config', 'G-Z9ZQSX1X53')
     </script>
-    <link
-      rel="preconnect"
-      href="https://fonts.googleapis.com"
-    />
-    <link
-      rel="preconnect"
-      href="https://fonts.gstatic.com"
-      crossorigin
-    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,300..700&family=Inter:wght@400;500&display=swap"
       rel="stylesheet"
@@ -143,8 +127,12 @@ const structuredData = article
           Novella Nora
         </a>
         <nav class="flex gap-6 text-sm font-sans text-[var(--color-muted)]">
-          <a href="/" class="hover:text-[var(--color-ink)] transition-colors">Writings</a>
-          <a href="/about" class="hover:text-[var(--color-ink)] transition-colors">About</a>
+          <a href="/" class="hover:text-[var(--color-ink)] transition-colors">
+            Writings
+          </a>
+          <a href="/about" class="hover:text-[var(--color-ink)] transition-colors">
+            About
+          </a>
         </nav>
       </div>
     </header>
@@ -154,9 +142,7 @@ const structuredData = article
     </main>
 
     <footer class="border-t border-[var(--color-rule)] py-6 px-6 text-xs font-sans text-[var(--color-muted)]">
-      <div class="max-w-2xl mx-auto">
-        © {new Date().getFullYear()} Nora Casey
-      </div>
+      <div class="max-w-2xl mx-auto">© {new Date().getFullYear()} Nora Casey</div>
     </footer>
   </body>
 </html>

@@ -25,8 +25,9 @@ jobs:
       - uses: ./.github/actions/setup
 
       # One command, the same one `npm run gate` runs locally, so CI and a laptop cannot
-      # disagree about what passing means. It is typecheck, then the unit tests, then the
-      # build — cheap checks first. There is still no lint config; that is OPS-09.
+      # disagree about what passing means. It is formatting, then lint, then typecheck, then
+      # the unit tests, then the build — cheap checks first, so a misformatted file fails in
+      # under a second rather than after a compile.
       - run: npm run gate
 
   # The deploy exists and is switched OFF until two things only a human can do are done.

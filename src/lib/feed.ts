@@ -43,7 +43,8 @@ export function buildFeed(options: FeedOptions): string {
     )
     .join('\n')
 
-  const updated = items.length > 0 ? `\n    <lastBuildDate>${rfc822(items[0].published)}</lastBuildDate>` : ''
+  const updated =
+    items.length > 0 ? `\n    <lastBuildDate>${rfc822(items[0].published)}</lastBuildDate>` : ''
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom">

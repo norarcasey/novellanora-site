@@ -19,11 +19,11 @@ if (configured !== undefined && configured !== '' && !URL.canParse(configured)) 
   throw new Error(
     configured === '[SENSITIVE]'
       ? 'SITE_URL pulled down as "[SENSITIVE]", which is what Vercel returns for a ' +
-        'variable marked Sensitive. Mark SITE_URL non-sensitive in the Vercel project: ' +
-        "it is the site's public address, so marking it sensitive protects nothing and " +
-        'breaks the build.'
+          'variable marked Sensitive. Mark SITE_URL non-sensitive in the Vercel project: ' +
+          "it is the site's public address, so marking it sensitive protects nothing and " +
+          'breaks the build.'
       : `SITE_URL is not a URL: ${JSON.stringify(configured)}. Set it to the canonical ` +
-        'origin, or leave it unset to use the default.',
+          'origin, or leave it unset to use the default.',
   )
 }
 
