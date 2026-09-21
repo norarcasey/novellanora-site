@@ -40,13 +40,21 @@ export default defineConfig({
     plugins: [tailwindcss()],
     // Keep the analytics client a file instead of inlining it into every page.
     // Astro inlines a chunk this small by default, and every page here is sent
-    // `no-store` — so an inlined copy is re-sent on every page view and cached
-    // never, while a file on the static layer is fetched once. Measured 21 Sep
-    // 2026 on /about, through the built function: 7,595 bytes inlined against
-    // 4,847 external, with the CSS bundle byte-identical either way. Nothing in src/ imports an image today,
-    // so this costs nothing else; if something ever does, it arrives as a file
-    // rather than a data URI, which on a no-store page is the better half of
-    // the same trade.
+    // `no-store` — so an inlined copy is re-sent in full on every page view,
+    // where a file under /_astro/ has a content-hashed name and is sent once.
+    // Measured 21 Sep 2026 on /about, through the built function: 7,595 bytes
+    // inlined against 4,847 external, with the CSS bundle byte-identical either
+    // way.
+    //
+    // What the file is NOT is free to re-check: Vercel serves /_astro/ with
+    // `public, max-age=0, must-revalidate`, so a browser revalidates on every
+    // navigation and gets a 304 with no body — verified against production on
+    // 22 Sep, for the CSS bundle as well as this chunk. The 2.8 KB is saved; a
+    // round trip is not. Making those hashed names `immutable` is OPS-12.
+    //
+    // Nothing in src/ imports an image today, so this costs nothing else; if
+    // something ever does it arrives as a file rather than a data URI, which on
+    // a no-store page is the better half of the same trade.
     build: { assetsInlineLimit: 0 },
   },
 })
