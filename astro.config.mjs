@@ -38,5 +38,15 @@ export default defineConfig({
   adapter: vercel(),
   vite: {
     plugins: [tailwindcss()],
+    // Keep the analytics client a file instead of inlining it into every page.
+    // Astro inlines a chunk this small by default, and every page here is sent
+    // `no-store` — so an inlined copy is re-sent on every page view and cached
+    // never, while a file on the static layer is fetched once. Measured 21 Sep
+    // 2026 on /about, through the built function: 7,595 bytes inlined against
+    // 4,847 external, with the CSS bundle byte-identical either way. Nothing in src/ imports an image today,
+    // so this costs nothing else; if something ever does, it arrives as a file
+    // rather than a data URI, which on a no-store page is the better half of
+    // the same trade.
+    build: { assetsInlineLimit: 0 },
   },
 })

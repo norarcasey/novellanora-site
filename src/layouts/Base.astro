@@ -2,6 +2,26 @@
 import '@/styles/global.css'
 import { SITE_ORIGIN } from '@/lib/site'
 import { APPLE_TOUCH_ICON, OG_IMAGE } from '@/lib/og'
+// Cookieless page counting, replacing the Google Analytics tag that sat in this
+// head unexamined from the first commit (OPS-05). No cookies, no cross-site
+// identifier and nothing to gate behind a consent banner: the only question it
+// exists to answer is whether anyone read the new piece.
+//
+// Vercel's component rather than the one-line script tag they document for
+// plain HTML, for two reasons worth not rediscovering. It builds its script and
+// intake URLs from `PUBLIC_VERCEL_OBSERVABILITY_BASEPATH`, the per-project seed
+// Vercel injects at build time, and falls back to `/_vercel/insights/` only
+// when that is absent — and the fallback is the path carried by every tracker
+// blocklist, so a hardcoded tag undercounts precisely the readers this is here
+// to count. It also passes `Astro.params`, so a piece is reported both as
+// itself and under `/writings/[slug]`.
+//
+// This comment is in the frontmatter and not beside the element on purpose: an
+// HTML comment is served, and this one measured ~900 bytes — on a page sent
+// `no-store` that is re-sent on every view, a third of what moving the script
+// out of the page just saved. See the `assetsInlineLimit` note in
+// astro.config.mjs.
+import Analytics from '@vercel/analytics/astro'
 
 interface Props {
   title: string
@@ -97,19 +117,7 @@ const structuredData = article
     <meta name="twitter:image:alt" content={OG_IMAGE.alt} />
 
     <script type="application/ld+json" is:inline set:html={JSON.stringify(structuredData)}></script>
-    <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-Z9ZQSX1X53"></script>
-    <script is:inline>
-      window.dataLayer = window.dataLayer || []
-      // Google's own snippet, kept verbatim. `arguments` is load-bearing: gtag
-      // reads the Arguments object it is handed, so rest parameters push an
-      // Array instead and the calls below are silently ignored.
-      function gtag() {
-        // eslint-disable-next-line prefer-rest-params
-        dataLayer.push(arguments)
-      }
-      gtag('js', new Date())
-      gtag('config', 'G-Z9ZQSX1X53')
-    </script>
+    <Analytics />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

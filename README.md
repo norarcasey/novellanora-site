@@ -70,11 +70,10 @@ annotation or a real runtime check). `eslint-plugin-astro` is what makes the
 templates lintable at all; without it the frontmatter blocks, where most of this
 site's logic lives, would be unchecked.
 
-Two exceptions are written down rather than silent: `.d.ts` files may use
+One exception is written down rather than silent: `.d.ts` files may use
 triple-slash references, because an `import` would make `src/env.d.ts` a module and
-its `ImportMetaEnv` would stop augmenting anything; and the gtag snippet in
-`Base.astro` keeps `arguments`, because gtag reads the Arguments object it is
-handed and rest parameters would push an Array it ignores.
+its `ImportMetaEnv` would stop augmenting anything. There was a second, for the
+`arguments` object in Google's gtag snippet; it left with the snippet (OPS-05).
 
 One thing to know about the Astro formatter: it moves whitespace across element
 boundaries, so `<a>Writings</a>` becomes an `<a>` with the text on its own line.
@@ -201,6 +200,40 @@ exist, and that they are the format and the size the pages advertise.
 The card is one image for the whole site, not one per piece. A piece still
 unfurls as itself: `og:title` and `og:description` carry its title and its
 opening. See `src/lib/og.ts` for why per-piece cards were not built.
+
+## Analytics
+
+Vercel Web Analytics, cookieless, since 21 Sep 2026. It replaced the Google
+Analytics tag (`G-Z9ZQSX1X53`) that had been in the layout head since the first
+commit with no stated purpose — OPS-05 is the decision, and this is the shape of
+it.
+
+**Enabling it is a dashboard step, not a code one.** Vercel → the project →
+Analytics → **Enable**. Until that is done the script path is not served, so the
+deploy is fine and the count is zero, which is a failure that looks exactly like
+nobody visiting.
+
+The client is `@vercel/analytics` — one dependency, no transitive ones — mounted
+as `<Analytics />` in `Base.astro`, which says there why the component rather than
+the one-line script tag Vercel documents for plain HTML. The short version: v2
+builds its script and intake URLs from a per-project seed injected at build time,
+and the fallback it would otherwise use, `/_vercel/insights/`, is on every tracker
+blocklist. So the hardcoded tag undercounts precisely the readers this is here to
+count.
+
+What Vercel records per view: timestamp, path, the dynamic route, referrer,
+filtered query params, approximate geolocation, browser, OS and device type. No
+cookies and no client-side storage; a visitor is a hash Vercel computes from the
+incoming request and discards after 24 hours, so there is nothing to follow a
+reader from one day to the next with. That is why there is no consent banner: the
+question being asked is only whether anyone read the new piece, and it is answered
+without keeping anything about who.
+
+Two things this does **not** do. It does not delete the Google Analytics property
+— `G-Z9ZQSX1X53` still exists and still holds what it gathered between May and
+September; removing the tag only stops collection. And the site has no privacy
+page saying any of the above to a reader, which is a fair thing to want on a site
+that counts them.
 
 ## Routes
 
