@@ -83,6 +83,30 @@ boundaries, so `<a>Writings</a>` becomes an `<a>` with the text on its own line.
 against production and by screenshotting the header, but it is the thing to look at
 first if a run of Prettier ever seems to have moved something on the page.
 
+Since Astro 7 that interacts with the build, and the interaction has one sharp
+edge worth knowing before you write a paragraph. The build compresses HTML with
+JSX whitespace rules (`compressHTML`, which defaults to `'jsx'`): whitespace
+_within_ a line is kept, and a line break between a run of text and an inline
+element beside it is **dropped**. So this
+
+```astro
+<p>
+  Reach me at
+  <a href="mailto:hello@novellanora.com">hello@novellanora.com</a>.
+</p>
+```
+
+is served as `Reach me athello@novellanora.com.` — the space is gone. Written on
+one line, or with an explicit `{' '}`, it survives.
+
+Prettier protects a break it _creates_: wrap a long sentence containing a link
+and it inserts `{' '}` for you. It does not protect a break it _inherits_ — the
+shape above passes `format:check` untouched. So the rule is about how you type
+the line in the first place: keep a word and the inline element next to it on the
+same line. This is only a hazard in prose. Everywhere else on this site the
+elements sit in `flex` containers, where a whitespace-only text node between two
+items is dropped by layout anyway.
+
 ## Environment variables
 
 Set in Vercel under Settings → Environment Variables, for Production and Preview:
@@ -105,6 +129,30 @@ one more place for the origin to be wrong bought nothing.
 
 Nothing here is a shared secret with the studio, because nothing is sent between
 them.
+
+## Dependencies
+
+Node 22.12 or newer — Astro 7 requires it, CI pins Node 22 in
+`.github/actions/setup`, and the Vercel function runs `nodejs22.x`.
+
+`npm audit` is expected to report **zero** advisories. It is worth keeping it
+there rather than at "fifteen, none of which matter today", because the fifteen
+are what hide the sixteenth.
+
+One of those zero is bought with an `overrides` entry in `package.json`:
+
+```json
+"overrides": { "path-to-regexp": "6.3.0" }
+```
+
+`@vercel/routing-utils` pins `path-to-regexp@6.1.0`, which carries a ReDoS
+advisory, and ships the patched 6.3.0 alongside it under the alias
+`path-to-regexp-updated`. There is no adapter release that drops the old one —
+`npm audit fix --force` "fixes" it by _downgrading_ `@astrojs/vercel` three major
+versions — so the override points the pin at the version Vercel already vendors.
+It was checked rather than assumed: with and without it, `.vercel/output/config.json`
+(the route table Vercel is handed) is byte-identical. Drop the override once an
+adapter release makes `npm audit` clean without it.
 
 ## How it deploys
 

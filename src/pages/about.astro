@@ -29,9 +29,14 @@ import Base from '@/layouts/Base.astro'
       parasite when it comes to compliments from strangers.
     </p>
 
+    {/* "Reach me at" and the link share a line on purpose. The build compresses
+        HTML with JSX whitespace rules, which drop the line break between a run of
+        text and an inline element beside it — split over two lines this renders as
+        "Reach me athello@novellanora.com". Whitespace WITHIN a line is kept, which
+        is the whole of why this one survives. A JSX comment rather than an HTML
+        one: a note about the build is not something to serve to a reader. */}
     <p>
-      Reach me at
-      <a href="mailto:hello@novellanora.com">hello@novellanora.com</a>.
+      Reach me at <a href="mailto:hello@novellanora.com">hello@novellanora.com</a>.
     </p>
   </article>
 </Base>
