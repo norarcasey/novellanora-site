@@ -30,24 +30,24 @@ jobs:
       # under a second rather than after a compile.
       - run: npm run gate
 
-  # The deploy exists and is switched OFF until two things only a human can do are done.
+  # This job is the only thing that ships `main` to production, and it runs only after the
+  # gate passes. It has been live since 14 Sep 2026: ENABLE_VERCEL_DEPLOY is `true`, the three
+  # VERCEL_* secrets are set, and `vercel.json` turns off Vercel's own Git deploys for `main`
+  # (branch previews still deploy from Git).
   #
-  # Vercel's own Git integration currently ships this site on every push, with no knowledge
-  # of whether the gate passed. Turning this job on WITHOUT disconnecting that integration
-  # would reproduce CruciNora's OPS-1 exactly: there, the bot put a commit in front of users
-  # 33 seconds before the gated deploy ran, on every push in the repo's history, so a failing
-  # test would have skipped the Actions deploy while the broken commit was already live.
+  # Turning the Git deploys back on for `main` would reproduce CruciNora's OPS-1 exactly.
+  # There, the bot put a commit in front of users 33 seconds before the gated deploy ran, on
+  # every push in the repo's history, so a failing test would have skipped the Actions
+  # deploy while the broken commit was already live.
   #
-  # To switch it on:
-  #   1. Disconnect the Git integration in the Vercel project settings.
-  #   2. Add VERCEL_TOKEN, VERCEL_ORG_ID and VERCEL_PROJECT_ID as repository secrets.
-  #   3. Set the repository variable ENABLE_VERCEL_DEPLOY=true.
-  # Then verify on the next push rather than assuming:
+  # To confirm there is still a single deployer:
   #   gh api repos/norarcasey/novellanora-site/deployments
-  # should show exactly one production deployment, by the workflow, with no vercel[bot] row.
+  # should show no vercel[bot] Production row newer than 8e25bd7 (14 Sep). The list does not
+  # show this job: `vercel deploy` from the CLI records no GitHub deployment. To see that the
+  # job shipped a commit, look at this job's run.
   #
-  # Until then the job is skipped and CI stays green, so a red run always means something is
-  # actually broken.
+  # The variable stays as a kill switch. Setting it to anything but `true` skips the job
+  # and leaves CI green, and then nothing deploys `main` at all.
   deploy:
     needs: [gate]
     runs-on: ubuntu-latest
