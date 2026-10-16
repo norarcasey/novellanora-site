@@ -37,6 +37,15 @@ export default defineConfig({
   site: siteUrl,
   adapter: vercel(),
   vite: {
+    // Give rolldown this one tsconfig instead of letting it search for one per
+    // file. Its search, for the prerender entry (a bare specifier resolved as if
+    // imported from <root>/index.html), reads this tsconfig.json and then
+    // carries on into the directory above. In a worktree under
+    // .claude/worktrees/ that is the main checkout, which has no node_modules,
+    // so its `extends: astro/tsconfigs/strict` fails the build with "Tsconfig
+    // not found". Traced with RD_LOG=oxc_resolver=trace (oxc_resolver 11.24.3),
+    // 16 Oct 2026: NOVA-2.
+    tsconfig: './tsconfig.json',
     plugins: [tailwindcss()],
     // Keep the analytics client a file instead of inlining it into every page.
     // Astro inlines a chunk this small by default, and every page here is sent

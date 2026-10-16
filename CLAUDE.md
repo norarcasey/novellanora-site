@@ -14,12 +14,7 @@ standard. This section is only this repo's commands.
 1. **Merge to main.** From the ticket's worktree, rebase onto `main` and fast-forward `main` to
    it. Never open a pull request or make a merge commit.
 2. **Verify.** `npm run gate`: formatting, lint, typecheck, unit tests, build. That is the whole
-   check, because this repo has no end-to-end suite. A red gate stops here. One known trap
-   (5 Oct 2026): a worktree under `.claude/worktrees/` fails `astro build` with
-   `Tsconfig not found astro/tsconfigs/strict`, though the same files build cleanly outside the
-   main checkout.
-   Until `NOVA-2` fixes that, run the gate on a fresh copy (`rsync` without `.git` and
-   `node_modules`, then `npm ci`), and say in the summary that you did.
+   check, because this repo has no end-to-end suite. A red gate stops here.
 3. **Push.** `git push origin HEAD:main`. If it is refused because `main` moved, rebase, verify
    again and push again.
 4. **Deploy.** CI deploys on push and nothing else does: `vercel.json` turns off Vercel's own
