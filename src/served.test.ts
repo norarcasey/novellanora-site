@@ -1,5 +1,13 @@
 import { execFileSync } from 'node:child_process'
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from 'node:fs'
+import {
+  cpSync,
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -126,6 +134,21 @@ beforeAll(async () => {
     cpSync(join(REPO, path), join(root, path), { recursive: true })
   }
   symlinkSync(join(REPO, 'node_modules'), join(root, 'node_modules'))
+  // The site's own config, with one change: Vite keeps the symlink's path
+  // rather than following it out of the root. Followed, a dependency's .astro
+  // file resolves to the repo's node_modules, and Astro, which keys what it has
+  // compiled by path under the root, then cannot find it ("No cached compile
+  // metadata found"). This is the one way this build differs from the deployed
+  // one, and it changes where files are found, not what they become.
+  writeFileSync(
+    join(root, 'astro.served.config.mjs'),
+    `import config from './astro.config.mjs'
+export default {
+  ...config,
+  vite: { ...config.vite, resolve: { ...config.vite?.resolve, preserveSymlinks: true } },
+}
+`,
+  )
 
   // SITE_URL is left unset so the build takes the configured default, which is
   // the origin every assertion below expects.
@@ -135,11 +158,16 @@ beforeAll(async () => {
     VITE_SUPABASE_ANON_KEY: 'test-anon-key',
   }
   delete env.SITE_URL
-  execFileSync(process.execPath, [join(REPO, 'node_modules/astro/bin/astro.mjs'), 'build'], {
-    cwd: root,
-    env,
-    stdio: 'pipe',
-  })
+  execFileSync(
+    process.execPath,
+    [
+      join(REPO, 'node_modules/astro/bin/astro.mjs'),
+      'build',
+      '--config',
+      'astro.served.config.mjs',
+    ],
+    { cwd: root, env, stdio: 'pipe' },
+  )
 
   vi.stubGlobal('fetch', stubFetch)
   // The adapter's entrypoint. It was `(req, res)` before @astrojs/vercel 11 and
