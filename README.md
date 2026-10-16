@@ -153,6 +153,23 @@ It was checked rather than assumed: with and without it, `.vercel/output/config.
 (the route table Vercel is handed) is byte-identical. Drop the override once an
 adapter release makes `npm audit` clean without it.
 
+## What the tests check
+
+Most tests sit beside the module they test (`src/lib/*.test.ts`) and need nothing
+running. One does not: `src/served.test.ts` builds the site, imports the built
+Vercel function and sends it requests, with Supabase answered from fixtures. It
+pins the part of the SEO work that only a served page can show. Every page
+answers 200 and carries its own title, description and www canonical. A piece's
+card describes the piece. The card image exists at the size it claims. The
+sitemap lists exactly the pages served, and robots.txt names it. It runs
+against the build rather than `astro dev` because only the build compresses
+HTML, and that compression once ate a space on /about that dev rendered
+correctly.
+
+That build goes into a temporary directory, not `.vercel/output`, because it
+carries a stub Supabase URL. Left in the real output, a hand-run
+`vercel deploy --prebuilt` would ship it.
+
 ## How it deploys
 
 `main` deploys through GitHub Actions and nowhere else. The `gate` job runs the
