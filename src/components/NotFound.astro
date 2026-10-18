@@ -1,0 +1,28 @@
+---
+// The answer to an address that names nothing: the site's own header, so the
+// visit does not end there, and a way back to the writing. Rendered by
+// src/pages/404.astro for any path no route matches, and by the piece route
+// for a slug the store says it does not have (READ-02). Like <Unavailable />,
+// it carries its own <Base>, so a route uses it INSTEAD of its own layout.
+//
+// The 404 is the route's to set, in the frontmatter; this only draws the page.
+// Before it, a bad slug was answered with an empty 404 body, which Vercel filled
+// with 79 bytes of its own plain text: no header, no link, no sign of the site.
+import Base from '@/layouts/Base.astro'
+---
+
+<Base title="Not found" description="There is nothing at this address on Novella Nora.">
+  <div class="max-w-2xl mx-auto">
+    <h1 class="font-serif text-2xl font-medium text-[var(--color-ink)] mb-3">Not found</h1>
+    <p class="text-[var(--color-ink)]/80 font-serif leading-relaxed mb-8">
+      There is nothing at this address. It may have been mistyped, or the piece it pointed to may
+      have been taken down.
+    </p>
+    <a
+      href="/"
+      class="text-sm font-sans text-[var(--color-muted)] hover:text-[var(--color-accent)] transition-colors"
+    >
+      ← All writings
+    </a>
+  </div>
+</Base>

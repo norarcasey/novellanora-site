@@ -1,5 +1,6 @@
 ---
 import Base from '@/layouts/Base.astro'
+import NotFound from '@/components/NotFound.astro'
 import Unavailable from '@/components/Unavailable.astro'
 import { getPublishedBySlug } from '@/lib/supabase'
 import { markUnavailable } from '@/lib/unavailable'
@@ -15,9 +16,12 @@ if (!slug) return Astro.redirect('/', 302)
 // 404 is a statement that this piece does not exist, and it is the sharper half
 // of PUB-04: made on a failed lookup it says a live piece was deleted, to a
 // reader and to every crawler holding the URL. So only an answer earns it.
+// It is answered with the site's own not-found page rather than an empty body,
+// which Vercel replaced with its plain-text NOT_FOUND (READ-02).
 const result = await getPublishedBySlug(slug)
 if (result.ok && !result.data) {
-  return new Response(null, { status: 404, statusText: 'Not Found' })
+  Astro.response.status = 404
+  Astro.response.statusText = 'Not Found'
 }
 if (!result.ok) markUnavailable(Astro.response)
 const writing = result.ok ? result.data : null
@@ -62,6 +66,8 @@ const description = writing?.body_text ? excerpt(writing.body_text, 200) : undef
       </div>
     </article>
   </Base>
+) : result.ok ? (
+  <NotFound />
 ) : (
   <Unavailable />
 )}

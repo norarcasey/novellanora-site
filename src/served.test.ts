@@ -300,6 +300,21 @@ describe('the served site', () => {
     expect((await get('/writings/a-technical-post')).status).toBe(404)
   })
 
+  // READ-02. The status was right and the body was empty, which Vercel filled
+  // with its own plain-text NOT_FOUND: the visit ended with no way back. A
+  // wrong slug and a path no route matches must both be the site's own page.
+  it('answers a wrong address with the site’s own page, still a 404', async () => {
+    for (const path of ['/writings/never-written', '/writings/a-technical-post', '/no-such-page']) {
+      const response = await get(path)
+      expect(response.status, path).toBe(404)
+      expect(response.headers.get('content-type'), path).toMatch(/^text\/html/)
+      const html = await response.text()
+      expect(head(html).title, path).toBe('Not found · Novella Nora')
+      expect(html, path).toContain('<a href="/about"')
+      expect(html, path).toContain('← All writings')
+    }
+  })
+
   it('gives every page its own title, description and canonical', async () => {
     const seen = { title: new Set<string>(), description: new Set<string>() }
     for (const { path } of everyPage()) {
