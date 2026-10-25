@@ -21,6 +21,10 @@ standard. This section is only this repo's commands.
    Git deploys for `main`. Watch the run to the end with `gh run watch <id> --exit-status`.
    The ticket is shipped only when the `deploy` job succeeds on your commit. A green `gate`
    with `deploy` skipped is not shipped.
+5. **Fast-forward the main checkout.** Leave the worktree (`ExitWorktree`, `keep`) and run
+   `git pull --ff-only` in the main checkout, changing nothing else there. A pull that will
+   not fast-forward means the main checkout has work of its own: stop and tell Nora.
+   There are no project hooks here; it keeps the folder Nora opens current (`LIN/LIN-81`).
 
 Then `complete_run` with `shipped: true`, saying which commit went out and which run deployed
 it.
