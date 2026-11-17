@@ -13,6 +13,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import type { PublishedEntry } from '@/lib/supabase'
+import { RETRY_AFTER_SECONDS, UNAVAILABLE_TITLE } from '@/lib/unavailable'
 
 // The half of the SEO spec that has to look at a served page (FIND-04). The
 // pure halves — the sitemap's shape, the feed's escaping, the excerpt — are
@@ -92,6 +93,10 @@ const POSTS: PublishedEntry[] = [
 
 const OURS = POSTS.filter((p) => p.site === 'novellanora')
 
+/** Switched on by the outage block below: while it is set, every query is
+ *  answered the way PostgREST answers when it cannot serve one. */
+let outage = false
+
 /** Answers the two queries the site makes, the way PostgREST would: the `eq`
  *  filters applied, newest first. Anything else is a request this test does not
  *  know the site makes, and fails loudly rather than returning something. */
@@ -100,6 +105,12 @@ async function stubFetch(input: RequestInfo | URL, init?: RequestInit): Promise<
   const url = new URL(request.url)
   if (url.origin !== SUPABASE || url.pathname !== '/rest/v1/public_posts') {
     throw new Error(`Unexpected request from the built site: ${request.method} ${request.url}`)
+  }
+  if (outage) {
+    return Response.json(
+      { code: 'PGRST000', message: 'Could not connect to the database', details: null, hint: null },
+      { status: 500 },
+    )
   }
   let rows = POSTS
   for (const [column, value] of url.searchParams) {
@@ -397,5 +408,74 @@ describe('the served site', () => {
   it('keeps the space before the address on /about', async () => {
     const { html } = await page('/about')
     expect(html).toContain('Reach me at <a href="mailto:hello@novellanora.com">')
+  })
+})
+
+// PUB-04, asserted where it matters: on the served routes, not only at the
+// query layer. An error from the store is no answer at all, and each route
+// that reads it must say "ask again" — 503, with Retry-After for the crawlers
+// and feed readers that honour it, and no-store so that no cache keeps the
+// outage as if it were the site. The sharper half is the piece's route: a 404
+// there tells every crawler holding the URL that a live piece was deleted.
+describe('the served site, when the store cannot be reached', () => {
+  beforeAll(() => {
+    outage = true
+    // The query layer logs each failure; that is its job, and not this test's
+    // output.
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterAll(() => {
+    outage = false
+    vi.restoreAllMocks()
+  })
+
+  /** The outage page has no description of its own, which is right for a 503
+   *  no one should index, so its title is read directly rather than through
+   *  `head`, which insists on one. */
+  function titleOf(html: string): string[] {
+    return [...html.matchAll(/<title>([^<]*)<\/title>/g)].map((m) => decode(m[1]))
+  }
+
+  function expectUnavailable(response: Response, path: string) {
+    expect(response.status, path).toBe(503)
+    expect(response.headers.get('retry-after'), path).toBe(String(RETRY_AFTER_SECONDS))
+    expect(response.headers.get('cache-control'), path).toMatch(/\bno-store\b/)
+  }
+
+  it('answers 503 on the writings list, in the site’s own page', async () => {
+    const response = await get('/')
+    expectUnavailable(response, '/')
+    expect(response.headers.get('content-type')).toMatch(/^text\/html/)
+    const html = await response.text()
+    expect(titleOf(html)).toEqual([`${UNAVAILABLE_TITLE} · Novella Nora`])
+    expect(html).not.toContain('No writings published yet')
+  })
+
+  it('answers 503 for a piece, never 404, whether or not it exists', async () => {
+    // A live piece and one that was never written are indistinguishable when
+    // the lookup failed, and both must say so rather than guess.
+    for (const path of [`/writings/${OURS[0].slug}`, '/writings/never-written']) {
+      const response = await get(path)
+      expectUnavailable(response, path)
+      const html = await response.text()
+      expect(titleOf(html), path).toEqual([`${UNAVAILABLE_TITLE} · Novella Nora`])
+      expect(html, path).not.toContain('Not found')
+    }
+  })
+
+  it('answers 503 on the feed and the sitemap, rather than an empty list', async () => {
+    for (const path of ['/rss.xml', '/sitemap.xml']) {
+      const response = await get(path)
+      expectUnavailable(response, path)
+      const body = await response.text()
+      expect(body, path).not.toContain('<item>')
+      expect(body, path).not.toContain('<url>')
+    }
+  })
+
+  it('still serves what does not read the store', async () => {
+    expect((await get('/about')).status).toBe(200)
+    expect((await get('/robots.txt')).status).toBe(200)
   })
 })
