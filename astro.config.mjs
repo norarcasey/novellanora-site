@@ -7,9 +7,22 @@ import tailwindcss from '@tailwindcss/vite'
 // studio's snapshot table — src/lib/supabase.ts says why the view and not the
 // table. No edge caching: a personal writing site doesn't get enough traffic
 // to justify the cache-invalidation complexity, and "publish edits show up
-// immediately" is worth the latency. How MUCH latency is not known: the
-// figure that stood here was never measured against production, so it is
-// absent rather than approximated. Measuring it is OPS-04.
+// immediately" is worth the latency.
+//
+// The latency, measured (OPS-04, 17 Nov 2026): every response carries a
+// `Server-Timing` header, and `db` there is the Supabase read alone, timed in
+// the function (src/lib/timing.ts). Fifteen warm requests per route against
+// production, function in iad1, median (min–max):
+//   /                 377 ms (218–907)
+//   /writings/[slug]  222 ms (152–430)
+//   /rss.xml          351 ms (169–536)
+// Rendering around the read costs 1–3 ms, so the read is the whole of it. The
+// "~100ms per page" that stood here was never measured and was wrong by three
+// to four times. Of that read, PostgREST and Postgres themselves account for
+// 10–50 ms (`x-envoy-upstream-service-time`); the rest is the path between the
+// function and the database's region. So the price is real, but it is where
+// the function runs rather than the lack of a cache, and the trade stands.
+// Re-measure with `curl -sI https://www.novellanora.com/ | grep -i server-timing`.
 
 // `vercel pull` cannot read back an environment variable marked Sensitive in
 // the Vercel project: it returns the literal string "[SENSITIVE]" instead. Astro
