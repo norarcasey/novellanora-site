@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { timeDb } from '@/lib/timing'
 
 const url = import.meta.env.VITE_SUPABASE_URL
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -66,11 +67,14 @@ export interface PublishedEntry {
 export type Query<T> = { ok: true; data: T } | { ok: false }
 
 export async function listPublished(): Promise<Query<PublishedEntry[]>> {
-  const { data, error } = await supabase
-    .from('public_posts')
-    .select('*')
-    .eq('site', SITE)
-    .order('published_at', { ascending: false })
+  // timeDb only measures the read for Server-Timing (OPS-04); the query is unchanged.
+  const { data, error } = await timeDb(() =>
+    supabase
+      .from('public_posts')
+      .select('*')
+      .eq('site', SITE)
+      .order('published_at', { ascending: false }),
+  )
   if (error) {
     console.error('Failed to list published entries:', error)
     return { ok: false }
@@ -80,12 +84,9 @@ export async function listPublished(): Promise<Query<PublishedEntry[]>> {
 }
 
 export async function getPublishedBySlug(slug: string): Promise<Query<PublishedEntry | null>> {
-  const { data, error } = await supabase
-    .from('public_posts')
-    .select('*')
-    .eq('site', SITE)
-    .eq('slug', slug)
-    .maybeSingle()
+  const { data, error } = await timeDb(() =>
+    supabase.from('public_posts').select('*').eq('site', SITE).eq('slug', slug).maybeSingle(),
+  )
   if (error) {
     console.error('Failed to load published entry:', error)
     return { ok: false }
