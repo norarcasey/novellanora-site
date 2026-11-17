@@ -68,11 +68,13 @@ export default defineConfig({
     // inlined against 4,847 external, with the CSS bundle byte-identical either
     // way.
     //
-    // What the file is NOT is free to re-check: Vercel serves /_astro/ with
-    // `public, max-age=0, must-revalidate`, so a browser revalidates on every
-    // navigation and gets a 304 with no body — verified against production on
-    // 22 Sep, for the CSS bundle as well as this chunk. The 2.8 KB is saved; a
-    // round trip is not. Making those hashed names `immutable` is OPS-12.
+    // Until 17 Nov it was not free to re-check: Vercel served /_astro/ with
+    // `public, max-age=0, must-revalidate`, so a browser revalidated on every
+    // navigation and got a 304 with no body (measured 22 Sep). The hashed
+    // names are `immutable` now (OPS-12), from a `headers` rule in
+    // vercel.json, which compiles ahead of Vercel's filesystem step. The
+    // adapter writes the same header into config.json, but after that step,
+    // which answers a static file first, so its rule never applies.
     //
     // Nothing in src/ imports an image today, so this costs nothing else; if
     // something ever does it arrives as a file rather than a data URI, which on
